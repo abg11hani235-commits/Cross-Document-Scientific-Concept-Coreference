@@ -63,22 +63,26 @@ def cluster_exact_matching(mentions_df: pd.DataFrame) -> pd.DataFrame:
                 next_cid += 1
             pred_ids[row_pos] = norm_to_cid[key]
 
-    result = mentions_df[
-        [
-            "mention_id",
-            "split",
-            "topic_id",
-            "paper_id",
-            "paper_title",
-            "mention_text",
-            "normalized_text",
-            "start",
-            "end",
-            "token_length",
-            "cluster_id",
-            "parent_cluster_id",
-        ]
-    ].copy()
+    base_cols = [
+        "mention_id",
+        "split",
+        "topic_id",
+        "paper_id",
+        "paper_title",
+        "mention_text",
+        "normalized_text",
+        "start",
+        "end",
+        "token_length",
+        "cluster_id",
+        "parent_cluster_id",
+    ]
+    extra_provenance = [
+        c
+        for c in ("flat_start", "flat_end", "doc_start", "doc_end", "snippet_index", "coordinate_source")
+        if c in mentions_df.columns
+    ]
+    result = mentions_df[base_cols + extra_provenance].copy()
     result = result.rename(columns={"cluster_id": "gold_cluster_id"})
     result["pred_cluster_id"] = pred_ids
     result["method"] = "exact_matching"

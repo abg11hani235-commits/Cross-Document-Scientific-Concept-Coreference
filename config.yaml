@@ -34,7 +34,12 @@ embedding:
   cache_enabled: true
 
 clustering:
-  algorithm: "connected_components"  # options: "connected_components", "agglomerative"
+  # "auto" tunes all candidate_algorithms on validation and freezes the winner;
+  # or specify "connected_components" or "agglomerative" directly.
+  algorithm: "auto"
+  candidate_algorithms:
+    - "connected_components"
+    - "agglomerative"
   agglomerative_linkage: "average"
   batch_size: 512
 

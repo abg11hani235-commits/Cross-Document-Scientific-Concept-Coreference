@@ -23,6 +23,7 @@ class ExtractionStats:
     extracted_mentions: int = 0
     flatten_aligned_mentions: int = 0
     doc_fallback_mentions: int = 0
+    cluster_id_mismatch_mentions: int = 0
     malformed_mentions: int = 0
     empty_normalized_mentions: int = 0
     anomalies: list[dict[str, Any]] = field(default_factory=list)
@@ -36,6 +37,7 @@ class ExtractionStats:
             "extracted_mentions": self.extracted_mentions,
             "flatten_aligned_mentions": self.flatten_aligned_mentions,
             "doc_fallback_mentions": self.doc_fallback_mentions,
+            "cluster_id_mismatch_mentions": self.cluster_id_mismatch_mentions,
             "malformed_mentions": self.malformed_mentions,
             "empty_normalized_mentions": self.empty_normalized_mentions,
             "anomaly_count": len(self.anomalies),
@@ -128,13 +130,6 @@ def extract_mentions_from_dataframe(
         parent_lookup = _build_parent_lookup(row.relations, split_name, topic_id)
         has_doc_alignment = len(doc_mentions) == len(flat_mentions) and len(doc_mentions) > 0
 
-        # Precompute snippet start offsets in flatten_tokens for validation
-        snippet_offsets: list[int] = []
-        running = 0
-        for toks in doc_tokens_list:
-            snippet_offsets.append(running)
-            running += len(toks)
-
         n_flat = len(flat_tokens)
         stats.total_raw_mentions += len(flat_mentions)
 
@@ -158,6 +153,8 @@ def extract_mentions_from_dataframe(
             paper_idx = -1
             d_start = -1
             d_end = -1
+            d_cid: int | None = None
+            cluster_id_consistent: bool | None = None
             doc_text: str | None = None
             doc_valid = False
 
@@ -174,7 +171,17 @@ def extract_mentions_from_dataframe(
                         doc_valid = True
                     if 0 <= snippet_idx < len(doc_ids):
                         paper_idx = doc_ids[snippet_idx]
-                if d_cid != raw_cid:
+                cluster_id_consistent = d_cid == raw_cid
+                if not cluster_id_consistent:
+                    stats.cluster_id_mismatch_mentions += 1
+                    logger.warning(
+                        "Cluster ID mismatch in split '%s' topic=%d mention=%d: flatten=%d vs doc=%d (preserving flatten gold cluster).",
+                        split_name,
+                        topic_id,
+                        m_idx,
+                        raw_cid,
+                        d_cid,
+                    )
                     stats.anomalies.append(
                         {
                             "topic_id": topic_id,
@@ -186,13 +193,12 @@ def extract_mentions_from_dataframe(
             flat_valid = 0 <= f_start and f_slice_end <= n_flat and f_start < f_slice_end
             flat_text = " ".join(flat_tokens[f_start:f_slice_end]) if flat_valid else ""
 
-            extraction_source = "flatten_tokens"
+            coordinate_source = "flatten_tokens"
             mention_text = flat_text
-            used_start, used_end = f_start, f_end
 
             if not flat_valid:
                 if prefer_doc_tokens_on_mismatch and doc_valid and doc_text is not None:
-                    extraction_source = "doc_tokens_fallback"
+                    coordinate_source = "doc_tokens_fallback"
                     mention_text = doc_text
                     stats.doc_fallback_mentions += 1
                     stats.anomalies.append(
@@ -217,20 +223,19 @@ def extract_mentions_from_dataframe(
                     continue
             elif doc_valid and doc_text is not None and flat_text != doc_text:
                 if prefer_doc_tokens_on_mismatch:
-                    extraction_source = "doc_tokens_fallback"
+                    coordinate_source = "doc_tokens_fallback"
                     mention_text = doc_text
                     stats.doc_fallback_mentions += 1
-                    if len(stats.anomalies) < 200:
-                        stats.anomalies.append(
-                            {
-                                "topic_id": topic_id,
-                                "mention_idx": m_idx,
-                                "reason": (
-                                    f"Span mismatch flatten='{flat_text}' vs doc='{doc_text}'; "
-                                    "using doc_tokens."
-                                ),
-                            }
-                        )
+                    stats.anomalies.append(
+                        {
+                            "topic_id": topic_id,
+                            "mention_idx": m_idx,
+                            "reason": (
+                                f"Span mismatch flatten='{flat_text}' vs doc='{doc_text}'; "
+                                "using doc_tokens."
+                            ),
+                        }
+                    )
                 else:
                     stats.flatten_aligned_mentions += 1
             else:
@@ -259,8 +264,8 @@ def extract_mentions_from_dataframe(
             parent_cid = parent_lookup.get(raw_cid)
             token_len = (
                 (d_end - d_start + 1)
-                if (extraction_source == "doc_tokens_fallback" and doc_valid)
-                else (used_end - used_start + 1)
+                if (coordinate_source == "doc_tokens_fallback" and doc_valid)
+                else (f_end - f_start + 1)
             )
 
             records.append(
@@ -276,15 +281,20 @@ def extract_mentions_from_dataframe(
                     "mention_idx": m_idx,
                     "mention_text": mention_text,
                     "normalized_text": normalized_text,
-                    "start": used_start,
-                    "end": used_end,
+                    "flat_start": f_start,
+                    "flat_end": f_end,
+                    "start": f_start,
+                    "end": f_end,
                     "doc_start": d_start,
                     "doc_end": d_end,
                     "token_length": int(token_len),
                     "raw_cluster_id": raw_cid,
+                    "doc_cluster_id": d_cid,
+                    "cluster_id_consistent": cluster_id_consistent,
                     "cluster_id": scoped_cid,
                     "parent_cluster_id": parent_cid,
-                    "extraction_source": extraction_source,
+                    "coordinate_source": coordinate_source,
+                    "extraction_source": coordinate_source,
                     "is_valid": True,
                 }
             )

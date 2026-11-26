@@ -271,3 +271,72 @@ def plot_error_distribution(
         axes[1].text(0.5, 0.5, "No similarity error pairs available", ha="center", va="center")
 
     return _save_fig(fig, out_dir / "07_error_category_distribution.png")
+
+
+def plot_hierarchy_structure(
+    hierarchy_report: dict[str, Any],
+    out_dir: Path,
+) -> Path:
+    """Plot SciCo hierarchy tree components, isolated clusters, and depth/branching stats."""
+    splits = ["train", "validation", "test"]
+    val_stats = hierarchy_report["hierarchy_validation"]
+    split_stats = hierarchy_report["split_statistics"]
+
+    tree_comps = [val_stats[s]["total_connected_components"] for s in splits]
+    isolated = [val_stats[s]["total_isolated_clusters"] for s in splits]
+    mean_depth = [split_stats[s]["mean_tree_depth"] for s in splits]
+    max_depth = [split_stats[s]["max_tree_depth"] for s in splits]
+
+    fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.6))
+    x = np.arange(len(splits))
+    width = 0.36
+
+    b1 = axes[0].bar(x - width / 2, tree_comps, width, label="Tree Components", color="#2b5c8f")
+    b2 = axes[0].bar(x + width / 2, isolated, width, label="Isolated Clusters", color="#95a5a6")
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels([s.title() for s in splits])
+    axes[0].set_ylabel("Count")
+    axes[0].set_title("SciCo Hierarchy Components vs. Isolated Clusters")
+    axes[0].legend()
+    axes[0].bar_label(b1, padding=3, fontsize=9)
+    axes[0].bar_label(b2, padding=3, fontsize=9)
+
+    b3 = axes[1].bar(x - width / 2, mean_depth, width, label="Mean Tree Depth", color="#4c9f70")
+    b4 = axes[1].bar(x + width / 2, max_depth, width, label="Max Tree Depth", color="#d97724")
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels([s.title() for s in splits])
+    axes[1].set_ylabel("Tree Depth (nodes)")
+    axes[1].set_title("SciCo Hierarchy Depth Across Splits")
+    axes[1].legend()
+    axes[1].bar_label(b3, fmt="%.2f", padding=3, fontsize=9)
+    axes[1].bar_label(b4, padding=3, fontsize=9)
+
+    return _save_fig(fig, out_dir / "08_hierarchy_structure.png")
+
+
+def plot_runtime_memory_comparison(
+    benchmark_df: pd.DataFrame,
+    out_dir: Path,
+) -> Path:
+    """Plot measured wall-clock runtime and Python peak memory (tracemalloc) by algorithm."""
+    df = benchmark_df.copy()
+    df["split_label"] = df["split"].str.title()
+
+    fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.6))
+    sns.barplot(data=df, x="split_label", y="runtime_seconds", hue="algorithm", ax=axes[0])
+    for container in axes[0].containers:
+        axes[0].bar_label(container, fmt="%.3fs", padding=3, fontsize=9)
+    axes[0].set_xlabel("Split")
+    axes[0].set_ylabel("Wall-Clock Runtime (s)")
+    axes[0].set_title("Clustering Runtime Comparison")
+    axes[0].legend(title="Algorithm")
+
+    sns.barplot(data=df, x="split_label", y="peak_memory_mb", hue="algorithm", ax=axes[1])
+    for container in axes[1].containers:
+        axes[1].bar_label(container, fmt="%.2f MB", padding=3, fontsize=9)
+    axes[1].set_xlabel("Split")
+    axes[1].set_ylabel("Peak Traced Memory (MB)")
+    axes[1].set_title("Clustering Peak Memory (tracemalloc)")
+    axes[1].legend(title="Algorithm")
+
+    return _save_fig(fig, out_dir / "09_runtime_memory_comparison.png")

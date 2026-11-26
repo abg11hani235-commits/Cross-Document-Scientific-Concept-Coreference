@@ -74,6 +74,10 @@ def compute_pairwise_metrics(
             "num_topics": 0,
         }
 
+    for col in (scope_col, gold_col, pred_col):
+        if predictions_df[col].isna().any():
+            raise ValueError(f"predictions_df contains missing/null values in column '{col}'.")
+
     total_tp = 0
     total_fp = 0
     total_fn = 0

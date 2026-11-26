@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from src.clustering import cluster_mentions_by_similarity
+from src.clustering import benchmark_clustering, cluster_mentions_by_similarity
 from src.data_loader import load_all_splits, load_config, verify_split_isolation
 from src.embedding_model import MentionEmbedder
 from src.error_analysis import analyze_coreference_errors
@@ -30,9 +30,11 @@ from src.visualization import (
     plot_cluster_size_distribution,
     plot_error_distribution,
     plot_gold_vs_pred_clusters,
+    plot_hierarchy_structure,
     plot_mention_length_distribution,
     plot_mentions_per_split,
     plot_method_comparison,
+    plot_runtime_memory_comparison,
     plot_validation_threshold_curve,
 )
 
@@ -111,7 +113,7 @@ def run_pipeline(config_path: str | Path = "config.yaml") -> dict[str, Any]:
         mentions_by_split["test"], "test", use_cache=use_cache
     )
 
-    # 5. Validation-only threshold tuning (comparing configured algorithm + agglomerative on Val only)
+    # 5. Validation-only threshold & algorithm selection
     clust_cfg = cfg["clustering"]
     tune_cfg = cfg["threshold_tuning"]
     grid = build_threshold_grid(
@@ -122,25 +124,34 @@ def run_pipeline(config_path: str | Path = "config.yaml") -> dict[str, Any]:
     tie_breaker = str(tune_cfg.get("tie_breaker", "higher_precision"))
     linkage = str(clust_cfg.get("agglomerative_linkage", "average"))
     clust_batch = int(clust_cfg.get("batch_size", 512))
+    configured_algo = str(clust_cfg.get("algorithm", "auto"))
 
-    val_cc_df, best_cc = tune_threshold_on_validation(
-        mentions_by_split["validation"],
-        val_embeddings,
-        thresholds=grid,
-        algorithm="connected_components",
-        batch_size=clust_batch,
-        tie_breaker=tie_breaker,
-    )
-    val_agg_df, best_agg = tune_threshold_on_validation(
-        mentions_by_split["validation"],
-        val_embeddings,
-        thresholds=grid,
-        algorithm="agglomerative",
-        agglomerative_linkage=linkage,
-        batch_size=clust_batch,
-        tie_breaker=tie_breaker,
-    )
-    val_all_tuning_df = pd.concat([val_cc_df, val_agg_df], ignore_index=True)
+    if configured_algo == "auto":
+        candidates = [
+            str(a)
+            for a in clust_cfg.get("candidate_algorithms", ["connected_components", "agglomerative"])
+        ]
+    elif configured_algo in {"connected_components", "agglomerative"}:
+        candidates = [configured_algo]
+    else:
+        raise ValueError(f"Unsupported clustering.algorithm in config: {configured_algo}")
+
+    tuning_frames: list[pd.DataFrame] = []
+    best_by_algo: dict[str, dict[str, Any]] = {}
+    for algo_name in candidates:
+        algo_df, algo_best = tune_threshold_on_validation(
+            mentions_by_split["validation"],
+            val_embeddings,
+            thresholds=grid,
+            algorithm=algo_name,  # type: ignore[arg-type]
+            agglomerative_linkage=linkage,
+            batch_size=clust_batch,
+            tie_breaker=tie_breaker,
+        )
+        tuning_frames.append(algo_df)
+        best_by_algo[algo_name] = algo_best
+
+    val_all_tuning_df = pd.concat(tuning_frames, ignore_index=True)
     val_all_tuning_df.to_csv(metrics_dir / "validation_threshold_results.csv", index=False)
 
     # Freeze best (algorithm, threshold) strictly from validation results
@@ -215,14 +226,35 @@ def run_pipeline(config_path: str | Path = "config.yaml") -> dict[str, Any]:
     with (metrics_dir / "hierarchical_analysis.json").open("w", encoding="utf-8") as fh:
         json.dump(hierarchy_report, fh, indent=2)
 
-    # 9. Save comprehensive test metrics JSON
+    # 9. Benchmark runtime & peak memory for both clustering algorithms at frozen threshold
+    bench_records = benchmark_clustering(
+        mentions_by_split["validation"],
+        val_embeddings,
+        split_name="validation",
+        threshold=frozen_thr,
+        agglomerative_linkage=linkage,
+        batch_size=clust_batch,
+    ) + benchmark_clustering(
+        mentions_by_split["test"],
+        test_embeddings,
+        split_name="test",
+        threshold=frozen_thr,
+        agglomerative_linkage=linkage,
+        batch_size=clust_batch,
+    )
+    benchmark_df = pd.DataFrame(bench_records)
+    benchmark_df.to_csv(metrics_dir / "runtime_memory_benchmarks.csv", index=False)
+
+    # 10. Save comprehensive test metrics JSON
     final_metrics_payload = {
         "model_name": emb_cfg["model_name"],
         "split_isolation": isolation,
         "extraction_reports": extraction_reports,
         "validation_selection": {
-            "best_connected_components": best_cc,
-            "best_agglomerative": best_agg,
+            "configured_algorithm": configured_algo,
+            "best_by_algorithm": best_by_algo,
+            "best_connected_components": best_by_algo.get("connected_components"),
+            "best_agglomerative": best_by_algo.get("agglomerative"),
             "frozen_choice": frozen_choice,
         },
         "validation_metrics": {
@@ -234,19 +266,22 @@ def run_pipeline(config_path: str | Path = "config.yaml") -> dict[str, Any]:
             "embedding_clustering": test_emb_metrics,
         },
         "error_analysis_summary": error_summary,
+        "runtime_memory_benchmarks": bench_records,
     }
     with (metrics_dir / "test_metrics.json").open("w", encoding="utf-8") as fh:
         json.dump(final_metrics_payload, fh, indent=2)
 
-    # 10. Generate all 7 visualizations
+    # 11. Generate all 9 visualizations
     plot_mentions_per_split(mentions_all_df, figures_dir)
     plot_cluster_size_distribution(mentions_all_df, figures_dir)
     plot_mention_length_distribution(mentions_all_df, figures_dir)
-    winning_curve_df = val_cc_df if frozen_algo == "connected_components" else val_agg_df
+    winning_curve_df = val_all_tuning_df[val_all_tuning_df["algorithm"] == frozen_algo]
     plot_validation_threshold_curve(winning_curve_df, frozen_thr, figures_dir)
     plot_method_comparison(comparison_df, figures_dir)
     plot_gold_vs_pred_clusters(test_exact_preds, test_emb_preds, figures_dir)
     plot_error_distribution(test_emb_metrics, fm_df, mm_df, figures_dir)
+    plot_hierarchy_structure(hierarchy_report, figures_dir)
+    plot_runtime_memory_comparison(benchmark_df, figures_dir)
 
     logger.info("Pipeline completed successfully.")
     return final_metrics_payload

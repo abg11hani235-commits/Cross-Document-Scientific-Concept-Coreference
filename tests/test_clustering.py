@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from src.clustering import (
+    benchmark_clustering,
     cluster_mentions_by_similarity,
     cluster_topic_agglomerative,
     cluster_topic_connected_components,
@@ -166,3 +168,49 @@ def test_embedding_output_dimensions_and_empty_handling() -> None:
     assert np.allclose(vecs[0], vecs[2])
     # Empty string receives zero vector safely
     assert np.allclose(vecs[1], 0.0)
+
+
+def test_clustering_zero_vectors_and_parameter_validation() -> None:
+    emb = np.array(
+        [
+            [0.0, 0.0],  # zero vector -> must stay singleton
+            [1.0, 0.0],
+            [1.0, 0.0],
+            [0.0, 0.0],  # second zero vector -> must NOT merge with first zero vector
+        ],
+        dtype=np.float32,
+    )
+    cc_labels = cluster_topic_connected_components(emb, threshold=0.8)
+    agg_labels = cluster_topic_agglomerative(emb, threshold=0.8, linkage="average")
+    for lbls in (cc_labels, agg_labels):
+        assert list(lbls) == [0, 1, 1, 2]
+
+    with pytest.raises(ValueError, match="Unsupported cosine linkage"):
+        cluster_topic_agglomerative(emb, threshold=0.8, linkage="ward")
+
+    with pytest.raises(ValueError, match="Cosine threshold"):
+        cluster_topic_connected_components(emb, threshold=1.5)
+
+
+def test_provenance_columns_preserved_and_benchmark_helper() -> None:
+    df = _sample_mentions_df().copy()
+    df["flat_start"] = df["start"]
+    df["flat_end"] = df["end"]
+    df["doc_start"] = df["start"]
+    df["doc_end"] = df["end"]
+    df["snippet_index"] = 0
+    df["coordinate_source"] = "flatten_tokens"
+
+    exact_out = cluster_exact_matching(df)
+    for col in ("flat_start", "flat_end", "doc_start", "doc_end", "snippet_index", "coordinate_source"):
+        assert col in exact_out.columns
+
+    emb = np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]], dtype=np.float32)
+    emb_out = cluster_mentions_by_similarity(df, emb, threshold=0.8, algorithm="agglomerative")
+    for col in ("flat_start", "flat_end", "doc_start", "doc_end", "snippet_index", "coordinate_source"):
+        assert col in emb_out.columns
+
+    bench = benchmark_clustering(df, emb, split_name="validation", threshold=0.8)
+    assert len(bench) == 2
+    assert {r["algorithm"] for r in bench} == {"connected_components", "agglomerative"}
+    assert all(r["runtime_seconds"] >= 0.0 and r["peak_memory_mb"] >= 0.0 for r in bench)

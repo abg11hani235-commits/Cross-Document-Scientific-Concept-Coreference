@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Literal
+import time
+import tracemalloc
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -40,6 +42,9 @@ def _canonicalize_labels(labels: np.ndarray) -> np.ndarray:
     return out
 
 
+VALID_AGGLOMERATIVE_LINKAGES = {"average", "complete", "single"}
+
+
 def cluster_topic_connected_components(
     embeddings: np.ndarray,
     threshold: float,
@@ -61,6 +66,8 @@ def cluster_topic_connected_components(
     Computes similarities in row chunks of ``batch_size`` to avoid materializing
     a full dense float32 ``N x N`` matrix for very large topics.
     """
+    if not (-1.0 <= threshold <= 1.0):
+        raise ValueError(f"Cosine threshold must be in [-1.0, 1.0], got {threshold}.")
     n = embeddings.shape[0]
     if n == 0:
         return np.empty(0, dtype=np.int64)
@@ -105,11 +112,17 @@ def cluster_topic_agglomerative(
 ) -> np.ndarray:
     """Cluster mentions in a single topic via Agglomerative Clustering on cosine distance.
 
-    Uses ``distance_threshold = 1.0 - threshold`` with ``metric='cosine'``.
+    Uses ``distance_threshold = 1.0 - threshold`` with ``metric='precomputed'``.
     Unlike connected components, average-linkage agglomerative clustering requires
     the mean pairwise similarity between merged clusters to exceed ``threshold``,
     reducing transitive chaining.
     """
+    if not (-1.0 <= threshold <= 1.0):
+        raise ValueError(f"Cosine threshold must be in [-1.0, 1.0], got {threshold}.")
+    if linkage not in VALID_AGGLOMERATIVE_LINKAGES:
+        raise ValueError(
+            f"Unsupported cosine linkage '{linkage}'. Expected one of {sorted(VALID_AGGLOMERATIVE_LINKAGES)}."
+        )
     n = embeddings.shape[0]
     if n == 0:
         return np.empty(0, dtype=np.int64)
@@ -124,6 +137,13 @@ def cluster_topic_agglomerative(
     if valid_indices.size == 1:
         labels[valid_indices[0]] = 0
     elif valid_indices.size > 1:
+        if valid_indices.size > 2000:
+            est_mb = (valid_indices.size ** 2 * 4) / (1024 * 1024)
+            logger.warning(
+                "Large topic (%d valid mentions): precomputed cosine distance matrix requires ~%.1f MB.",
+                valid_indices.size,
+                est_mb,
+            )
         sub = normed[valid_indices]
         # Cosine distance matrix bounded to [0, 2]
         cos_sim = np.clip(sub @ sub.T, -1.0, 1.0)
@@ -196,22 +216,26 @@ def cluster_mentions_by_similarity(
         for pos, cid in zip(idx_arr, local_labels):
             pred_ids[int(pos)] = f"{split_val}::t{int(topic_val)}::{algorithm}_{int(cid)}"
 
-    result = pos_df[
-        [
-            "mention_id",
-            "split",
-            "topic_id",
-            "paper_id",
-            "paper_title",
-            "mention_text",
-            "normalized_text",
-            "start",
-            "end",
-            "token_length",
-            "cluster_id",
-            "parent_cluster_id",
-        ]
-    ].copy()
+    base_cols = [
+        "mention_id",
+        "split",
+        "topic_id",
+        "paper_id",
+        "paper_title",
+        "mention_text",
+        "normalized_text",
+        "start",
+        "end",
+        "token_length",
+        "cluster_id",
+        "parent_cluster_id",
+    ]
+    extra_provenance = [
+        c
+        for c in ("flat_start", "flat_end", "doc_start", "doc_end", "snippet_index", "coordinate_source")
+        if c in pos_df.columns
+    ]
+    result = pos_df[base_cols + extra_provenance].copy()
     result = result.rename(columns={"cluster_id": "gold_cluster_id"})
     result["pred_cluster_id"] = pred_ids
     result["method"] = f"embedding_{algorithm}"
@@ -224,3 +248,46 @@ def cluster_mentions_by_similarity(
         result["pred_cluster_id"].nunique(),
     )
     return result
+
+
+def benchmark_clustering(
+    mentions_df: pd.DataFrame,
+    embeddings: np.ndarray,
+    *,
+    split_name: str,
+    threshold: float,
+    algorithms: tuple[ClusteringAlgorithm, ...] = ("connected_components", "agglomerative"),
+    agglomerative_linkage: str = "average",
+    batch_size: int = 512,
+) -> list[dict[str, Any]]:
+    """Measure wall-clock runtime and Python peak memory (tracemalloc) for clustering."""
+    records: list[dict[str, Any]] = []
+    max_topic_size = int(mentions_df.groupby("topic_id").size().max()) if not mentions_df.empty else 0
+
+    for algo in algorithms:
+        tracemalloc.start()
+        t0 = time.perf_counter()
+        _ = cluster_mentions_by_similarity(
+            mentions_df,
+            embeddings,
+            threshold=threshold,
+            algorithm=algo,
+            agglomerative_linkage=agglomerative_linkage,
+            batch_size=batch_size,
+        )
+        elapsed = time.perf_counter() - t0
+        _, peak_bytes = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        records.append(
+            {
+                "split": split_name,
+                "algorithm": algo,
+                "threshold": float(threshold),
+                "num_mentions": int(len(mentions_df)),
+                "num_topics": int(mentions_df["topic_id"].nunique()) if not mentions_df.empty else 0,
+                "max_topic_size": max_topic_size,
+                "runtime_seconds": round(float(elapsed), 4),
+                "peak_memory_mb": round(float(peak_bytes / (1024 * 1024)), 3),
+            }
+        )
+    return records

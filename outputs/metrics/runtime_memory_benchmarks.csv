@@ -1,0 +1,5 @@
+split,algorithm,threshold,num_mentions,num_topics,max_topic_size,runtime_seconds,peak_memory_mb
+validation,connected_components,0.74,4873,100,92,0.1805,3.735
+validation,agglomerative,0.74,4873,100,92,0.3564,3.708
+test,connected_components,0.74,10423,200,82,0.4364,7.799
+test,agglomerative,0.74,10423,200,82,0.6186,7.734

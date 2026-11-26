@@ -212,12 +212,14 @@ def analyze_coreference_errors(
     }
 
     if norm_emb is not None:
-        if not fm_df.empty:
-            summary["false_merge_similarity_mean"] = float(fm_df["cosine_similarity"].mean())
-            summary["false_merge_similarity_median"] = float(fm_df["cosine_similarity"].median())
-        if not mm_df.empty:
-            summary["missed_match_similarity_mean"] = float(mm_df["cosine_similarity"].mean())
-            summary["missed_match_similarity_median"] = float(mm_df["cosine_similarity"].median())
+        fm_sims = fm_df["cosine_similarity"].dropna() if not fm_df.empty else pd.Series(dtype=float)
+        mm_sims = mm_df["cosine_similarity"].dropna() if not mm_df.empty else pd.Series(dtype=float)
+        if not fm_sims.empty:
+            summary["false_merge_similarity_mean"] = float(fm_sims.mean())
+            summary["false_merge_similarity_median"] = float(fm_sims.median())
+        if not mm_sims.empty:
+            summary["missed_match_similarity_mean"] = float(mm_sims.mean())
+            summary["missed_match_similarity_median"] = float(mm_sims.median())
 
     if not fm_df.empty:
         fm_df = fm_df.sort_values(

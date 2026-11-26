@@ -8,3 +8,4 @@ outputs/cache/
 *.pt
 .DS_Store
 Thumbs.db
+AGENTS.md
