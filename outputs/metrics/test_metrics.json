@@ -1,0 +1,267 @@
+{
+  "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+  "split_isolation": {
+    "counts": {
+      "train": 221,
+      "validation": 100,
+      "test": 200
+    },
+    "overlaps": {},
+    "is_disjoint": true
+  },
+  "extraction_reports": {
+    "train": {
+      "split": "train",
+      "total_topics": 221,
+      "total_raw_mentions": 10922,
+      "extracted_mentions": 10922,
+      "flatten_aligned_mentions": 10922,
+      "doc_fallback_mentions": 0,
+      "malformed_mentions": 0,
+      "empty_normalized_mentions": 0,
+      "anomaly_count": 0,
+      "anomalies_sample": []
+    },
+    "validation": {
+      "split": "validation",
+      "total_topics": 100,
+      "total_raw_mentions": 4873,
+      "extracted_mentions": 4873,
+      "flatten_aligned_mentions": 4873,
+      "doc_fallback_mentions": 0,
+      "malformed_mentions": 0,
+      "empty_normalized_mentions": 0,
+      "anomaly_count": 0,
+      "anomalies_sample": []
+    },
+    "test": {
+      "split": "test",
+      "total_topics": 200,
+      "total_raw_mentions": 10423,
+      "extracted_mentions": 10423,
+      "flatten_aligned_mentions": 10361,
+      "doc_fallback_mentions": 62,
+      "malformed_mentions": 0,
+      "empty_normalized_mentions": 0,
+      "anomaly_count": 62,
+      "anomalies_sample": [
+        {
+          "topic_id": 1034,
+          "mention_idx": 0,
+          "reason": "Span mismatch flatten='collect terms with' vs doc='text classification task'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 1,
+          "reason": "Span mismatch flatten='social networks from' vs doc='text classification problem'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 2,
+          "reason": "Span mismatch flatten='not applicable to' vs doc='text classification problem'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 3,
+          "reason": "Span mismatch flatten='to resolve' vs doc='text-based classification'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 4,
+          "reason": "Span mismatch flatten='of different' vs doc='text-based classification'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 5,
+          "reason": "Span mismatch flatten='of documents' vs doc='text classifying'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 6,
+          "reason": "Span mismatch flatten='troubleshooting , and' vs doc='text data classification'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 7,
+          "reason": "Span mismatch flatten='of text image' vs doc='text data classification'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 8,
+          "reason": "Span mismatch flatten='selection of keyword' vs doc='text image classification'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 9,
+          "reason": "Span mismatch flatten=', has been' vs doc='Text Image Classification'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 10,
+          "reason": "Span mismatch flatten='probability of B' vs doc='text classification analysis'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 11,
+          "reason": "Span mismatch flatten='CLASSIFICATION Text classification is' vs doc='Text Classification of Methods'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 12,
+          "reason": "Span mismatch flatten='new evaluation of text' vs doc='TEXT CLASSIFICATION Text classification'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 13,
+          "reason": "Span mismatch flatten='multiplicative LSTM (' vs doc='text classification vector'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 14,
+          "reason": "Span mismatch flatten='necessarily negative in' vs doc='text classification problems'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 15,
+          "reason": "Span mismatch flatten='Transformer network' vs doc='text classification'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 16,
+          "reason": "Span mismatch flatten='the 2D structure' vs doc='text classification tasks'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 17,
+          "reason": "Span mismatch flatten='etc .' vs doc='text categorization'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 18,
+          "reason": "Span mismatch flatten='if the' vs doc='text categorization'; using doc_tokens."
+        },
+        {
+          "topic_id": 1034,
+          "mention_idx": 19,
+          "reason": "Span mismatch flatten='tasks . DistributedRepresentationsofSentencesandDocuments' vs doc='text classification problems'; using doc_tokens."
+        }
+      ]
+    }
+  },
+  "validation_selection": {
+    "best_connected_components": {
+      "threshold": 0.84,
+      "algorithm": "connected_components",
+      "precision": 0.594114555964267,
+      "recall": 0.6453933097385546,
+      "f1": 0.6186932253474883,
+      "tp": 11306,
+      "fp": 7724,
+      "fn": 6212,
+      "num_gold_clusters": 1747,
+      "num_pred_clusters": 1797,
+      "num_mentions": 4873,
+      "num_topics": 100
+    },
+    "best_agglomerative": {
+      "threshold": 0.74,
+      "algorithm": "agglomerative",
+      "precision": 0.6137770514534739,
+      "recall": 0.7075008562621303,
+      "f1": 0.6573148418233407,
+      "tp": 12394,
+      "fp": 7799,
+      "fn": 5124,
+      "num_gold_clusters": 1747,
+      "num_pred_clusters": 1404,
+      "num_mentions": 4873,
+      "num_topics": 100
+    },
+    "frozen_choice": {
+      "threshold": 0.74,
+      "algorithm": "agglomerative",
+      "precision": 0.6137770514534739,
+      "recall": 0.7075008562621303,
+      "f1": 0.6573148418233407,
+      "tp": 12394,
+      "fp": 7799,
+      "fn": 5124,
+      "num_gold_clusters": 1747,
+      "num_pred_clusters": 1404,
+      "num_mentions": 4873,
+      "num_topics": 100
+    }
+  },
+  "validation_metrics": {
+    "exact_matching": {
+      "precision": 0.9149463253509497,
+      "recall": 0.06324922936408266,
+      "f1": 0.11831918415291794,
+      "tp": 1108,
+      "fp": 103,
+      "fn": 16410,
+      "num_gold_clusters": 1747,
+      "num_pred_clusters": 3931,
+      "num_mentions": 4873,
+      "num_topics": 100
+    },
+    "embedding_clustering": {
+      "precision": 0.6137770514534739,
+      "recall": 0.7075008562621303,
+      "f1": 0.6573148418233407,
+      "tp": 12394,
+      "fp": 7799,
+      "fn": 5124,
+      "num_gold_clusters": 1747,
+      "num_pred_clusters": 1404,
+      "num_mentions": 4873,
+      "num_topics": 100
+    }
+  },
+  "test_metrics": {
+    "exact_matching": {
+      "precision": 0.9174679487179487,
+      "recall": 0.05807466017447758,
+      "f1": 0.10923487883991605,
+      "tp": 2290,
+      "fp": 206,
+      "fn": 37142,
+      "num_gold_clusters": 3711,
+      "num_pred_clusters": 8486,
+      "num_mentions": 10423,
+      "num_topics": 200
+    },
+    "embedding_clustering": {
+      "precision": 0.5931777729012752,
+      "recall": 0.6169608439845811,
+      "f1": 0.6048356019640747,
+      "tp": 24328,
+      "fp": 16685,
+      "fn": 15104,
+      "num_gold_clusters": 3711,
+      "num_pred_clusters": 3252,
+      "num_mentions": 10423,
+      "num_topics": 200
+    }
+  },
+  "error_analysis_summary": {
+    "total_false_merges": 16685,
+    "total_missed_matches": 15104,
+    "false_merge_causes": {
+      "lexical_overlap_different_concept": 13143,
+      "transitive_chaining_below_threshold": 2639,
+      "high_semantic_similarity_distinct_concepts": 898,
+      "same_paper_high_semantic_similarity": 5
+    },
+    "missed_match_causes": {
+      "partial_lexical_overlap_below_threshold": 9897,
+      "cross_paper_terminology_variation": 4191,
+      "acronym_vs_expanded_or_variant": 1011,
+      "different_surface_expression": 5
+    },
+    "false_merge_similarity_mean": 0.8094552857057237,
+    "false_merge_similarity_median": 0.805632,
+    "missed_match_similarity_mean": 0.5941272257680085,
+    "missed_match_similarity_median": 0.632674
+  }
+}

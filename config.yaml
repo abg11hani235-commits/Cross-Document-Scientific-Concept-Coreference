@@ -1,0 +1,49 @@
+# Configuration for Cross-Document Scientific Concept Coreference (SciCo)
+
+paths:
+  train_parquet: "data/Training.parquet"
+  val_parquet: "data/Validation.parquet"
+  test_parquet: "data/Test.parquet"
+  processed_dir: "data/processed"
+  cache_dir: "outputs/cache"
+  clusters_dir: "outputs/clusters"
+  metrics_dir: "outputs/metrics"
+  errors_dir: "outputs/errors"
+  figures_dir: "outputs/figures"
+
+seed: 42
+
+extraction:
+  # Verified on SciCo: [start, end] spans are 0-based and inclusive on end.
+  span_end_inclusive: true
+  # Fall back to doc-level `mentions` + `tokens` when `flatten_mentions` is misaligned/out-of-bounds
+  # (observed in Test topic id=1034).
+  prefer_doc_tokens_on_mismatch: true
+
+preprocessing:
+  lowercase: true
+  unicode_normalization: "NFKC"
+  strip_outer_punctuation: true
+  collapse_whitespace: true
+
+embedding:
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  batch_size: 128
+  normalize_embeddings: true
+  device: "auto"
+  cache_enabled: true
+
+clustering:
+  algorithm: "connected_components"  # options: "connected_components", "agglomerative"
+  agglomerative_linkage: "average"
+  batch_size: 512
+
+threshold_tuning:
+  min_threshold: 0.50
+  max_threshold: 0.95
+  step: 0.02
+  # Deterministic tie-breaker when multiple thresholds yield identical validation F1
+  tie_breaker: "higher_precision"
+
+error_analysis:
+  max_examples_per_category: 500

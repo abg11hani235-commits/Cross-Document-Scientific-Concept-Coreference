@@ -1,0 +1,323 @@
+{
+  "split_statistics": {
+    "train": {
+      "total_topics": 221,
+      "topics_with_relations": 220,
+      "total_parent_child_edges": 2514,
+      "total_clusters": 4079,
+      "clusters_acting_as_parent": 902,
+      "clusters_with_parent": 2514,
+      "mean_branching_factor": 2.787139689578714,
+      "max_branching_factor": 23,
+      "mean_tree_depth": 2.7222222222222223,
+      "max_tree_depth": 6
+    },
+    "validation": {
+      "total_topics": 100,
+      "topics_with_relations": 100,
+      "total_parent_child_edges": 1088,
+      "total_clusters": 1747,
+      "clusters_acting_as_parent": 399,
+      "clusters_with_parent": 1088,
+      "mean_branching_factor": 2.726817042606516,
+      "max_branching_factor": 14,
+      "mean_tree_depth": 2.825641025641026,
+      "max_tree_depth": 5
+    },
+    "test": {
+      "total_topics": 200,
+      "topics_with_relations": 199,
+      "total_parent_child_edges": 2379,
+      "total_clusters": 3711,
+      "clusters_acting_as_parent": 874,
+      "clusters_with_parent": 2379,
+      "mean_branching_factor": 2.7219679633867275,
+      "max_branching_factor": 24,
+      "mean_tree_depth": 2.8300492610837438,
+      "max_tree_depth": 7
+    }
+  },
+  "test_hierarchy_vs_embeddings": {
+    "num_parent_child_pairs_evaluated": 2379,
+    "mean_parent_child_centroid_cosine": 0.6694431836744625,
+    "mean_unrelated_within_topic_centroid_cosine": 0.37757868865436645,
+    "parent_child_pairs_merged_by_flat_clustering": 816,
+    "parent_child_merge_rate": 0.34300126103404793
+  },
+  "representative_examples": [
+    {
+      "topic_id": 842,
+      "source": "pwc",
+      "parent_cluster_id": "test::t842::c10",
+      "parent_mentions": [
+        "normalization mapping"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t842::c16",
+          "mentions": [
+            "HRR-specific profile normalization scheme"
+          ]
+        },
+        {
+          "child_cluster_id": "test::t842::c13",
+          "mentions": [
+            "channel normalization filter",
+            "channel normalization steps"
+          ]
+        },
+        {
+          "child_cluster_id": "test::t842::c25",
+          "mentions": [
+            "channel based normalization"
+          ]
+        },
+        {
+          "child_cluster_id": "test::t842::c18",
+          "mentions": [
+            "moment-based normalization algorithm",
+            "moment-based normalization"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 842,
+      "source": "pwc",
+      "parent_cluster_id": "test::t842::c14",
+      "parent_mentions": [
+        "switchable normalization",
+        "Switchable Normalization",
+        "Switchable Normalization ( SN )"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t842::c4",
+          "mentions": [
+            "Sparse Switchable Normalization ( SSN"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 843,
+      "source": "pwc",
+      "parent_cluster_id": "test::t843::c16",
+      "parent_mentions": [
+        "FPN",
+        "FPN detection"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t843::c6",
+          "mentions": [
+            "FPN compensation CMOS sensors"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 843,
+      "source": "pwc",
+      "parent_cluster_id": "test::t843::c0",
+      "parent_mentions": [
+        "FPN",
+        "FPN )",
+        "FPN algorithm"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t843::c15",
+          "mentions": [
+            "Multi-Logical Fuzzy Petri Nets ( MLFPN )"
+          ]
+        },
+        {
+          "child_cluster_id": "test::t843::c13",
+          "mentions": [
+            "BP Optimized FPN ( BP-FPN )"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 844,
+      "source": "pwc",
+      "parent_cluster_id": "test::t844::c15",
+      "parent_mentions": [
+        "trust-region-based optimization framework",
+        "trust region based optimization scheme"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t844::c7",
+          "mentions": [
+            "Trust Region Based Optimization"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 844,
+      "source": "pwc",
+      "parent_cluster_id": "test::t844::c11",
+      "parent_mentions": [
+        "policy gradient methods",
+        "Policy Gradient methods",
+        "policy gradient-based algorithms"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t844::c9",
+          "mentions": [
+            "Mirror Descent Policy Optimization ( MDPO )",
+            "MDPO algorithm",
+            "MDPO"
+          ]
+        },
+        {
+          "child_cluster_id": "test::t844::c19",
+          "mentions": [
+            "trust region policy optimization ( TRPO )",
+            "TRPO",
+            "TRPO )"
+          ]
+        },
+        {
+          "child_cluster_id": "test::t844::c20",
+          "mentions": [
+            "deep policy gradient techniques"
+          ]
+        },
+        {
+          "child_cluster_id": "test::t844::c10",
+          "mentions": [
+            "Double DDPG"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 845,
+      "source": "pwc",
+      "parent_cluster_id": "test::t845::c5",
+      "parent_mentions": [
+        "bidirectional transformers"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t845::c15",
+          "mentions": [
+            "XLNet and BERT architectures"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 845,
+      "source": "pwc",
+      "parent_cluster_id": "test::t845::c15",
+      "parent_mentions": [
+        "XLNet and BERT architectures"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t845::c18",
+          "mentions": [
+            "BERT",
+            "BERT",
+            "BERT networks"
+          ]
+        },
+        {
+          "child_cluster_id": "test::t845::c21",
+          "mentions": [
+            "XLNet",
+            "XLNet models",
+            "XLNet )"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 846,
+      "source": "pwc",
+      "parent_cluster_id": "test::t846::c2",
+      "parent_mentions": [
+        "image matching",
+        "image matching problem",
+        "image matching problem"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t846::c0",
+          "mentions": [
+            "patch matching",
+            "patch matching",
+            "patch-based matching"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 846,
+      "source": "pwc",
+      "parent_cluster_id": "test::t846::c0",
+      "parent_mentions": [
+        "patch matching",
+        "patch matching",
+        "patch-based matching"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t846::c3",
+          "mentions": [
+            "Patch-based stereo matching",
+            "patch-matching problem"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 847,
+      "source": "pwc",
+      "parent_cluster_id": "test::t847::c2",
+      "parent_mentions": [
+        "dependency parsing",
+        "Dependency Parsing",
+        "Dependency Parsing"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t847::c4",
+          "mentions": [
+            "sentence dependency parsing",
+            "sentence dependency parsing"
+          ]
+        },
+        {
+          "child_cluster_id": "test::t847::c23",
+          "mentions": [
+            "syntax-based dependency parsing"
+          ]
+        }
+      ]
+    },
+    {
+      "topic_id": 847,
+      "source": "pwc",
+      "parent_cluster_id": "test::t847::c15",
+      "parent_mentions": [
+        "supervised and unsupervised parsing"
+      ],
+      "children": [
+        {
+          "child_cluster_id": "test::t847::c0",
+          "mentions": [
+            "unsupervised parsing"
+          ]
+        }
+      ]
+    }
+  ]
+}
